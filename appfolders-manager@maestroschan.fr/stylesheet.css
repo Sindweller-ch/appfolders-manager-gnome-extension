@@ -34,6 +34,11 @@
 	color: rgba(255, 255, 255, 1.0);
 }
 
+
+.appArea{
+	background-color: rgba(224, 220, 220, 0.432);
+}
+
 .insensitiveArea {
 	background-color: rgba(0, 0, 0, 0.1);
 	color: rgba(100, 100, 100, 0.6);

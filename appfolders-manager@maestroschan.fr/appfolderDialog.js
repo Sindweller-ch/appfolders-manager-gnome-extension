@@ -17,6 +17,7 @@ const ShellEntry = imports.ui.shellEntry;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Extension = Me.imports.extension;
+const DragAndDrop = Me.imports.dragAndDrop;
 
 const Gettext = imports.gettext.domain('appfolders-manager');
 const _ = Gettext.gettext;
@@ -340,8 +341,16 @@ var AppfolderDialog = class AppfolderDialog {
 		this._applyCategories();
 		this._applyName();
 		this.destroy();
-		
-		Main.overview.viewSelector.appDisplay._views[1].view._redisplay();
+
+		//if merge apps
+		let stay_id = DragAndDrop.OVERLAY_MANAGER.getStayId();
+		if(stay_id!=null){
+			let folder_id = FOLDER_LIST[FOLDER_LIST.length - 1];
+			Extension.addToFolder(stay_id, folder_id);
+			DragAndDrop.OVERLAY_MANAGER.resetStayId();
+		}
+
+		//Main.overview.viewSelector.appDisplay._views[1].view._redisplay();
 		if (Extension.DEBUG) {
 			log('[AppfolderDialog v2] reload the view');
 		}

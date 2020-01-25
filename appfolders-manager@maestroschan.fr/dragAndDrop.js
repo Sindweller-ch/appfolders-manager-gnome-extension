@@ -37,6 +37,7 @@ function initDND () {
 class OverlayManager {
 	constructor () {
 		this.addActions = [];
+		this.addAppActions = [];
 		this.removeAction = new FolderActionArea('remove');
 		this.createAction = new FolderActionArea('create');
 		this.upAction = new NavigationArea('up');
@@ -44,12 +45,14 @@ class OverlayManager {
 		
 		this.next_drag_should_recompute = true;
 		this.current_width = 0;
+
+		this.stay_id = null;
 	}
 
 	on_drag_begin () {
 		this.ensurePopdowned();
-		this.ensureFolderOverlayActors();
-		this.updateFoldersVisibility();
+		this.ensureFolderAndAppOverlayActors();
+		this.updateFoldersAndAppsVisibility();
 		this.updateState(true);
 	}
 
@@ -99,12 +102,16 @@ class OverlayManager {
 		this.createAction.hide();
 		this.upAction.hide();
 		this.downAction.hide();
-		this.hideAllFolders();
+		this.hideAllFoldersAndApps();
 	}
 
-	hideAllFolders () {
+	hideAllFoldersAndApps () {
 		for (var i = 0; i < this.addActions.length; i++) {
 			this.addActions[i].hide();
+		}
+
+		for (var i = 0; i < this.addAppActions.length; i++) {
+			this.addAppActions[i].hide();
 		}
 	}
 
@@ -137,11 +144,11 @@ class OverlayManager {
 		this.updateArrowVisibility();
 	}
 
-	ensureFolderOverlayActors () {
+	ensureFolderAndAppOverlayActors () {
 		// A folder was opened, and just closed.
 		if (this.openedFolder != null) {
 			this.updateActorsPositions();
-			this.computeFolderOverlayActors();
+			this.computeFolderAndAppOverlayActors();
 			this.next_drag_should_recompute = true;
 			return;
 		}
@@ -152,11 +159,11 @@ class OverlayManager {
 		if (new_width != this.current_width || this.next_drag_should_recompute) {
 			this.next_drag_should_recompute = false;
 			this.updateActorsPositions();
-			this.computeFolderOverlayActors();
+			this.computeFolderAndAppOverlayActors();
 		}
 	}
 
-	computeFolderOverlayActors () {
+	computeFolderAndAppOverlayActors () {
 		let monitor = Main.layoutManager.primaryMonitor;
 		let xMiddle = ( monitor.x + monitor.width ) / 2;
 		let yMiddle = ( monitor.y + monitor.height ) / 2;
@@ -165,6 +172,8 @@ class OverlayManager {
 		let nItems = 0;
 		let indexes = [];
 		let folders = [];
+		let appIndexes = [];
+		let apps = [];
 		let x, y;
 
 		Main.overview.viewSelector.appDisplay._views[1].view._allItems.forEach(function(icon) {
@@ -172,6 +181,9 @@ class OverlayManager {
 				if (icon instanceof AppDisplay.FolderIcon) {
 					indexes.push(nItems);
 					folders.push(icon);
+				}else if(icon instanceof AppDisplay.AppIcon){
+					appIndexes.push(nItems);
+					apps.push(icon);
 				}
 				nItems++;
 			}
@@ -183,6 +195,10 @@ class OverlayManager {
 		
 		for (var i = 0; i < this.addActions.length; i++) {
 			this.addActions[i].actor.destroy();
+		}
+
+		for (var i = 0; i < this.addAppActions.length; i++) {
+			this.addAppActions[i].actor.destroy();
 		}
 
 		for (var i = 0; i < indexes.length; i++) {
@@ -203,15 +219,38 @@ class OverlayManager {
 
 			this.addActions[i] = new FolderArea(folders[i].id, x, y, page);
 		}
+
+		for (var i = 0; i < appIndexes.length; i++) {
+			let inPageIndex = appIndexes[i] % allAppsGrid._childrenPerPage;
+			let page = Math.floor(appIndexes[i] / allAppsGrid._childrenPerPage);
+			x = apps[i].actor.get_allocation_box().x1;
+			y = apps[i].actor.get_allocation_box().y1;
+
+			if (x == 0) {
+				page = -1;
+			}
+			x = Math.floor(x + x_correction);
+			y = y + this.topOfTheGrid;
+			y = y - (page * availHeightPerPage);
+
+			this.addAppActions[i] = new AppArea(apps[i].id, x, y, page);
+		}
 	}
 
-	updateFoldersVisibility () {
+	updateFoldersAndAppsVisibility () {
 		let appView = Main.overview.viewSelector.appDisplay._views[1].view;
 		for (var i = 0; i < this.addActions.length; i++) {
 			if ((this.addActions[i].page == appView._grid.currentPage) && (!appView._currentPopup)) {
 				this.addActions[i].show();
 			} else {
 				this.addActions[i].hide();
+			}
+		}
+		for (var i = 0; i < this.addAppActions.length; i++) {
+			if ((this.addAppActions[i].page == appView._grid.currentPage) && (!appView._currentPopup)) {
+				this.addAppActions[i].show();
+			} else {
+				this.addAppActions[i].hide();
 			}
 		}
 	}
@@ -229,19 +268,34 @@ class OverlayManager {
 	goToPage (nb) {
 		Main.overview.viewSelector.appDisplay._views[1].view.goToPage( nb );
 		this.updateArrowVisibility();
-		this.hideAllFolders();
-		this.updateFoldersVisibility(); //load folders of the new page
+		this.hideAllFoldersAndApps();
+		this.updateFoldersAndAppsVisibility(); //load folders of the new page
 	}
 
 	destroy () {
 		for (let i = 0; i > this.addActions.length; i++) {
 			this.addActions[i].destroy();
 		}
+		for (let i = 0; i > this.addAppActions.length; i++) {
+			this.addAppActions[i].destroy();
+		}
 		this.removeAction.destroy();
 		this.createAction.destroy();
 		this.upAction.destroy();
 		this.downAction.destroy();
 		//log('OverlayManager destroyed');
+	}
+
+	getStayId () {
+		return this.stay_id;
+	}
+
+	setStayId (stay_id) {
+		this.stay_id = stay_id;
+	}
+
+	resetStayId(){
+		this.stay_id = null;
 	}
 };
 
@@ -540,6 +594,51 @@ class FolderArea extends DroppableArea {
 		if ((source instanceof AppDisplay.AppIcon) &&
 		                            !Extension.isInFolder(source.id, this.id)) {
 			Extension.addToFolder(source, this.id);
+			Main.overview.endItemDrag(this);
+			return true;
+		}
+		Main.overview.endItemDrag(this);
+		return false;
+	}
+};
+
+/* This overlay is the area upon an app. Position and visibility of the actor
+ * is handled by exterior functions.
+ * "this.id" is the stay app's id, a string, as written in the gsettings key.
+ * Dropping an app on this stay app will display a dialog.
+ */
+class AppArea extends DroppableArea {
+	constructor (id, asked_x, asked_y, page) {
+		super(id);
+		this.page = page;
+
+		let grid = Main.overview.viewSelector.appDisplay._views[1].view._grid;
+		this.actor.width = grid._getHItemSize();
+		this.actor.height = grid._getVItemSize();
+
+		if (this.use_frame) {
+			this.styleClass = 'framedArea';
+		}else{
+			this.styleClass = 'appArea';
+		}
+		this.actor.style_class = this.styleClass;
+
+		this.setPosition(asked_x, asked_y);
+		Main.layoutManager.overviewGroup.add_actor(this.actor);
+	}
+
+	handleDragOver (source, actor, x, y, time) {
+		if (source instanceof AppDisplay.AppIcon) {
+			return DND.DragMotionResult.MOVE_DROP;
+		}
+		Main.overview.endItemDrag(this);
+		return DND.DragMotionResult.NO_DROP;
+	}
+
+	acceptDrop (source, actor, x, y, time) { //FIXME recharger la vue ou au minimum les miniatures des dossiers
+		if ((source instanceof AppDisplay.AppIcon) && (source.app.get_id()!=this.id)) {
+			OVERLAY_MANAGER.setStayId(this.id);
+			Extension.createNewFolder(source);
 			Main.overview.endItemDrag(this);
 			return true;
 		}

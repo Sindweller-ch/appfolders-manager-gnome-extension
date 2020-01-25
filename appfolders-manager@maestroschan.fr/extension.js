@@ -338,8 +338,13 @@ function mergeFolders (folder_staying_id, folder_dying_id) {
 
 //------------------------------------------------------------------------------
 
-function createNewFolder (app_source) {
-	let id = app_source.app.get_id();
+function createNewFolder (app_) {
+	let id;
+	if(app_ instanceof AppDisplay.AppIcon){
+		id = app_.app.get_id();
+	}else{
+		id = app_;
+	}
 	
 	let dialog = new AppfolderDialog.AppfolderDialog(null , id);
 	dialog.open();
@@ -348,8 +353,14 @@ function createNewFolder (app_source) {
 
 //------------------------------------------------------------------------------
 
-function addToFolder (app_source, folder_id) {
-	let id = app_source.app.get_id();
+function addToFolder (app_, folder_id) {
+	let id;
+	if (app_ instanceof AppDisplay.AppIcon){
+		id = app_.app.get_id();
+	}else{
+		id = app_;
+	}
+	
 	let folder_schema = folderSchema (folder_id);
 	
 	// un-exclude the application if it was excluded
