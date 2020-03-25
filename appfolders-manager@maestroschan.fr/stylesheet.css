@@ -34,6 +34,12 @@
 	color: rgba(255, 255, 255, 1.0);
 }
 
+.appArea {
+	background-gradient-start: rgba(241, 236, 236, 0.651);
+	background-gradient-end: rgba(248, 248, 248, 0.699);
+	background-gradient-direction: vertical;
+}
+
 .insensitiveArea {
 	background-color: rgba(0, 0, 0, 0.1);
 	color: rgba(100, 100, 100, 0.6);

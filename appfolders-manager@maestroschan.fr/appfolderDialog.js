@@ -347,6 +347,11 @@ var AppfolderDialog = class AppfolderDialog {
 				Extension.removeFromFolder(this._app, DragAndDrop.OVERLAY_MANAGER.openedFolder);
 			}
 		}
+		
+		if(DragAndDrop.OVERLAY_MANAGER.getStayId()!=null){
+			Extension.addToFolder(DragAndDrop.OVERLAY_MANAGER.getStayId(), FOLDER_LIST[FOLDER_LIST.length-1]);
+		}
+
 		Main.overview.viewSelector.appDisplay._views[1].view._redisplay();
 		if (Extension.DEBUG) {
 			log('[AppfolderDialog v2] reload the view');
