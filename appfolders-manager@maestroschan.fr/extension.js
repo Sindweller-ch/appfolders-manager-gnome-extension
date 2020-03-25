@@ -348,8 +348,14 @@ function createNewFolder (app_source) {
 
 //------------------------------------------------------------------------------
 
-function addToFolder (app_source, folder_id) {
-	let id = app_source.app.get_id();
+function addToFolder (app_, folder_id) {
+	let id = null;
+	if (app_ instanceof AppDisplay.AppIcon) {
+		id = app_.app.get_id();
+	} else {
+		id = app_;
+	}
+
 	let folder_schema = folderSchema (folder_id);
 	
 	// un-exclude the application if it was excluded
