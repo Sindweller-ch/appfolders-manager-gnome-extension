@@ -265,6 +265,9 @@ function removeFromFolder (app_id, folder_id) {
 		content.push(app_id);
 		folder_schema.set_strv('excluded-apps', content);
 	}
+	if ( folder_schema.get_strv('apps').length == 0 ){
+		deleteFolder(folder_id);
+	}
 	repaintFolder();
 	return true;
 }
