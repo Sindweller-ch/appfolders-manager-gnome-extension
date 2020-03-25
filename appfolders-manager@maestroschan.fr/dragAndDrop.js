@@ -39,7 +39,6 @@ class OverlayManager {
 		this.addFolderActions = [];
 		this.addAppActions = [];
 		this.removeAction = new FolderActionArea('remove');
-		this.createAction = new FolderActionArea('create');
 		this.upAction = new NavigationArea('up');
 		this.downAction = new NavigationArea('down');
 		this.stayId = null;
@@ -90,7 +89,6 @@ class OverlayManager {
 			} else {
 				this.removeAction.setActive(true);
 			}
-			this.createAction.show();
 			this.updateArrowVisibility();
 		} else {
 			this.hideAll();
@@ -99,7 +97,6 @@ class OverlayManager {
 
 	hideAll () {
 		this.removeAction.hide();
-		this.createAction.hide();
 		this.upAction.hide();
 		this.downAction.hide();
 		this.hideAllAppAndFolders();
@@ -129,16 +126,14 @@ class OverlayManager {
 		let yMiddle = ( monitor.y + monitor.height ) / 2;
 
 		// Positions of areas
-		this.removeAction.setPosition( xMiddle , bottomOfTheGrid );
-		this.createAction.setPosition( xMiddle, Main.overview._panelGhost.height );
+		this.removeAction.setPosition( 0, this.topOfTheGrid );
 		this.upAction.setPosition( 0, Main.overview._panelGhost.height );
 		this.downAction.setPosition( 0, bottomOfTheGrid );
 
 		// Sizes of areas
-		this.removeAction.setSize(xMiddle, monitor.height - bottomOfTheGrid);
-		this.createAction.setSize(xMiddle, this.topOfTheGrid - Main.overview._panelGhost.height);
-		this.upAction.setSize(xMiddle, this.topOfTheGrid - Main.overview._panelGhost.height);
-		this.downAction.setSize(xMiddle, monitor.height - bottomOfTheGrid);
+		this.removeAction.setSize(monitor.width, _availHeight);
+		this.upAction.setSize(monitor.width, this.topOfTheGrid - Main.overview._panelGhost.height);
+		this.downAction.setSize(monitor.width, monitor.height - bottomOfTheGrid);
 
 		this.updateArrowVisibility();
 	}
@@ -277,7 +272,6 @@ class OverlayManager {
 			this.addActions[i].destroy();
 		}
 		this.removeAction.destroy();
-		this.createAction.destroy();
 		this.upAction.destroy();
 		this.downAction.destroy();
 		//log('OverlayManager destroyed');
@@ -355,13 +349,9 @@ class FolderActionArea extends DroppableArea {
 		let x, y, label;
 
 		switch (this.id) {
-			case 'create':
-				label = _("Create a new folder");
-				this.styleClass = 'shadowedAreaTop';
-			break;
 			case 'remove':
 				label = '';
-				this.styleClass = 'shadowedAreaBottom';
+				this.styleClass = 'insensitiveArea';
 			break;
 			default:
 				label = 'invalid id';
@@ -386,17 +376,6 @@ class FolderActionArea extends DroppableArea {
 		Main.layoutManager.overviewGroup.add_actor(this.actor);
 	}
 
-	getRemoveLabel () {
-		let label;
-		if (OVERLAY_MANAGER.openedFolder == null) {
-			label = '…';
-		} else {
-			let folder_schema = Extension.folderSchema (OVERLAY_MANAGER.openedFolder);
-			label = folder_schema.get_string('name');
-		}
-		return (_("Remove from %s")).replace('%s', label);
-	}
-
 	setActive (active) {
 		super.setActive(active);
 		if (this.id == 'remove') {
@@ -413,11 +392,6 @@ class FolderActionArea extends DroppableArea {
 	}
 
 	acceptDrop (source, actor, x, y, time) {
-		if ((source instanceof AppDisplay.AppIcon) && (this.id == 'create')) {
-			Extension.createNewFolder(source);
-			Main.overview.endItemDrag(this);
-			return true;
-		}
 		if ((source instanceof AppDisplay.AppIcon) && (this.id == 'remove')) {
 			this.removeApp(source);
 			Main.overview.endItemDrag(this);
